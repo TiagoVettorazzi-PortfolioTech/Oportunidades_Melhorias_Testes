@@ -47,8 +47,7 @@ def transform_input_to_df(input_data):
         **Formato esperado (JSON):**
         [
             {{
-                "Oportunidade de Melhoria": "Descrição clara da oportunidade",
-                "Solução": "Solução recomendada",
+                "Solução": "Solução recomendada com base na oportunidade",
                 "Backlog de Atividades": "Atividades sugeridas",
                 "Investimento": "Investimento necessário",
                 "Ganhos": "Ganhos esperados"

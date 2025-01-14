@@ -7,7 +7,7 @@ import dspy
 from dspy.retrieve.weaviate_rm import WeaviateRM
 import weaviate
 from openai import OpenAI
-from dspy_DocsOportune import OportuneRAG
+from dspy_DocsOportune_2 import OportuneRAG
 import streamlit as st
 from weaviate.client import WeaviateClient
 

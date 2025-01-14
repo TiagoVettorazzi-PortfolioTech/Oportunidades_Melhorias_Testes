@@ -115,8 +115,7 @@ def render_diagnostico():
             'nome_processo': '',
             'atividade': '',
             'evento': '',
-            'causa': '',
-            'oportunidades': ''
+            'causa': ''
         }
     
     if 'all_resultados' not in st.session_state:
@@ -175,11 +174,6 @@ def render_diagnostico():
             value=st.session_state.form_inputs['causa'],
             placeholder="Digite a causa"
         )
-        oportunidade = st.text_input(
-            "Oportunidade de Melhoria", 
-            value=st.session_state.form_inputs['oportunidades'],
-            placeholder="Digite a oportunidade"
-        )
 
         submit_button = st.form_submit_button(label='Obter Oportunidade de melhorias')
 
@@ -189,8 +183,7 @@ def render_diagnostico():
                 'nome_processo': nome_processo,
                 'atividade': atividade,
                 'evento': evento,
-                'causa': causa,
-                'oportunidade': oportunidade
+                'causa': causa
             }
 
             # if ramo_empresa and st.session_state.direcionadores and nome_processo and atividade and evento and causa:

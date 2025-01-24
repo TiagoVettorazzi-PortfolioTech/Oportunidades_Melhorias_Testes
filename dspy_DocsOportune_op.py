@@ -27,7 +27,7 @@ def custom_excepthook(exctype, value, traceback):
 sys.excepthook = custom_excepthook
  
 try:
-    class Oportune(dspy.Signature):
+    class Oportune_op(dspy.Signature):
         """
             ** Contexto: **
             Você é um experiente Gerente de Projetos e Processos de uma grande empresa.
@@ -65,12 +65,12 @@ try:
         # AQUI TEMOS AS OPORTUNIDADES QUE VEM DA BASE FRIA (NO CASO ESTAMOS USANDO 5 PASSAGES)
         context = dspy.InputField(desc="Com base na Oportunidade de Melhoria identificada, desenvolva-a")    
    
-    class OportuneRAG(dspy.Module):
+    class OportuneRAG_op(dspy.Module):
         def __init__(self, num_passages=5):
             super().__init__()
        
             self.retrieve = dspy.Retrieve(k=num_passages)
-            self.generate_answer = dspy.ChainOfThought(Oportune) # Step by Step Cadeia de pensamento...
+            self.generate_answer = dspy.ChainOfThought(Oportune_op) # Step by Step Cadeia de pensamento...
  
         def forward(self, question):
             context = self.retrieve(question).passages

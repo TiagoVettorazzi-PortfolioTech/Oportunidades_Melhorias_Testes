@@ -24,7 +24,7 @@ def initialize_llm():
         openai_api_key=api_key,
     )
 
-def transform_input_to_df(input_data):
+def transform_input_to_df_op(input_data):
     """
     Transform input data into a pandas DataFrame using the LLM directly.
     
@@ -47,8 +47,7 @@ def transform_input_to_df(input_data):
         **Formato esperado (JSON):**
         [
             {{
-                "Oportunidade de Melhoria": "Descrição clara da oportunidade",
-                "Solução": "Solução recomendada",
+                "Solução": "Solução recomendada com base na oportunidade",
                 "Backlog de Atividades": "Atividades sugeridas",
                 "Investimento": "Investimento necessário",
                 "Ganhos": "Ganhos esperados"
@@ -77,3 +76,20 @@ def transform_input_to_df(input_data):
     except Exception as e:
         logger.error("Error during transformation: %s", e)
         return f"Error during transformation: {str(e)}"
+
+# # Testando o script
+# if __name__ == "__main__":
+#     test_input = """
+#     [
+#         {
+#             "Oportunidade de Melhoria": "Exemplo 1",
+#             "Solução": "Implementação de XYZ",
+#             "Backlog de Atividades": "- Planejamento\\n- Execução",
+#             "Investimento": "1000 USD",
+#             "Ganhos": "Aumento de 20% em eficiência"
+#         }
+#     ]
+#     """
+
+#     df = transform_input_to_df(test_input)
+#     print(df)

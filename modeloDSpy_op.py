@@ -7,7 +7,7 @@ import dspy
 from dspy.retrieve.weaviate_rm import WeaviateRM
 import weaviate
 from openai import OpenAI
-from dspy_DocsOportune import OportuneRAG
+from dspy_DocsOportune_op import OportuneRAG_op
 import streamlit as st
 from weaviate.client import WeaviateClient
 
@@ -24,7 +24,7 @@ class OportuneRAGClient:
         self.client = OpenAI(api_key=self.secretk)
         self.weaviate_client = self.setup_weaviate_client()
         self.params4o = self.setup_dspy_params()
-        self.modelo = OportuneRAG()
+        self.modelo = OportuneRAG_op()
  
     def setup_weaviate_client(self):
         try:

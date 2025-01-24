@@ -25,6 +25,7 @@
 #         }}
 #         </style>
 #     """, unsafe_allow_html=True)
+
 #     return st.container()
 
 # # Colocando imagem de fundo
@@ -385,7 +386,7 @@ import base64
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from process import run_agent_analysis  
+from process2 import run_agent_analysis  
 import pandas as pd
 from io import BytesIO
 import time

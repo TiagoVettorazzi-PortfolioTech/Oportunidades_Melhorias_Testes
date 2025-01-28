@@ -9,27 +9,9 @@ from io import BytesIO
 import time
 import streamlit as st
 
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
 
 def show(navigate):
-
-    all_resultados=[]
-
-    if 'direcionadores' not in st.session_state:
-        st.session_state.direcionadores = []
-
-    def stylable_container(key, css_styles):
-        st.markdown(f"""
-            <style>
-            div[data-testid="stHorizontalBlock"] > div:nth-child({key}) {{
-                {css_styles}
-            }}
-            </style>
-        """, unsafe_allow_html=True)
-        return st.container()
-
-    # Colocando imagem de fundo
+    # Função para adicionar uma imagem de fundo
     def add_bg_from_local(image_file):
         with Path(image_file).open("rb") as file:
             encoded_string = base64.b64encode(file.read()).decode()
@@ -46,12 +28,26 @@ def show(navigate):
             """,
             unsafe_allow_html=True
         )
+    
+    # Adiciona a imagem de fundo
+    add_bg_from_local("background.png")  # Ajuste o caminho da imagem
 
+    def stylable_container(key, css_styles):
+        st.markdown(f"""
+            <style>
+            div[data-testid="stHorizontalBlock"] > div:nth-child({key}) {{
+                {css_styles}
+            }}
+            </style>
+        """, unsafe_allow_html=True)
+        return st.container()
+    
     def load_css(css_file):
         with open(css_file, "r") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
+    
 
-    # Estilização de botões
+# Estilização de botões
     def get_button_style(button_class):
         if button_class == "current":
             return "background-color: #01374C; color: white; font-weight: bold; font-size: 24px;"
@@ -60,19 +56,24 @@ def show(navigate):
         else:
             return "background-color: #4B484340; color: #333333; font-size: 18px;"
         
-    def setup_navigation():
+
+    def setup_navigation(navigate):
         st.sidebar.markdown("<h1 style='text-align: center; color: #AC8D61;'>Navegação</h1>", unsafe_allow_html=True)
         
-        pages = ["🔍 Oportunidade de melhorias", "📋 Planilha Final"]
-        
+        pages = {
+            "🔍 Oportunidade de melhorias": "diagnostico_dir",
+            "📋 Planilha Final": "diagnostico_op"
+        }
+
         if 'current_page' not in st.session_state:
-            st.session_state.current_page = 0
+            st.session_state.current_page = "diagnostico_dir"  # Define a página inicial
 
-        for i, page in enumerate(pages):
-            button_class = "current" if i == st.session_state.current_page else "previous" if i == st.session_state.current_page - 1 else ""
+        for i, (page_label, page_name) in enumerate(pages.items()):
+            button_class = "current" if page_name == st.session_state.current_page else "previous" if i == list(pages.values()).index(st.session_state.current_page) - 1 else ""
 
-            if st.sidebar.button(page, key=f"nav_{i}", use_container_width=True, disabled=(i == st.session_state.current_page)):
-                st.session_state.current_page = i
+            if st.sidebar.button(page_label, key=f"nav_{i}", use_container_width=True, disabled=(page_name == st.session_state.current_page)):
+                st.session_state.current_page = page_name
+                navigate(page_name)
                 st.rerun()
 
             st.markdown(f"""
@@ -85,7 +86,7 @@ def show(navigate):
 
         return pages
 
-    # Adicionando direcionador
+
     def add_direcionador(new_direcionador):
         if new_direcionador and new_direcionador not in st.session_state.direcionadores:
             st.session_state.direcionadores.append(new_direcionador)
@@ -108,7 +109,13 @@ def show(navigate):
                 writer.sheets['Oportunidade de melhorias'].column_dimensions[chr(65 + col_idx)].width = column_width + 2
         return output.getvalue()
 
+    # Configuração inicial de estados na sessão
+    if "direcionadores" not in st.session_state:
+        st.session_state.direcionadores = []
+    if "resultados" not in st.session_state:
+        st.session_state.resultados = pd.DataFrame(columns=["Direcionador", "Oportunidade de Melhoria"])
 
+    # Renderiza a seção principal
     def render_diagnostico_dir():
         if 'form_inputs' not in st.session_state:
             st.session_state.form_inputs = {
@@ -256,6 +263,7 @@ def show(navigate):
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
+    # Renderiza a planilha final
     def render_planilha_final_dir():
         if 'resultados' not in st.session_state:
             st.warning("Não foi executado a obtenção das Oportunidade de melhorias.")
@@ -341,43 +349,58 @@ def show(navigate):
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
-    def main():
-        st.set_page_config(page_title="Oportunidade de Melhoria", layout="wide")
-        add_bg_from_local('background.png')
-        load_css('style.css')
-        
-        pages = setup_navigation()
-        progress_value = (st.session_state.current_page + 1) / len(pages)
-        
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown(f'<p class="big-font">{pages[st.session_state.current_page]}</p>', unsafe_allow_html=True)
-        with col2:
-            st.image('logo.png', width=200)
-        
-        st.progress(progress_value)
+    # Função de navegação modular que se conecta à lógica de home.py
+    def navigate(page_name):
+        st.session_state.current_page = page_name
+        st.rerun()
 
-        main_container = st.container()
-        with main_container:
-            if pages[st.session_state.current_page] == "🔍 Oportunidade de melhorias":
-                render_diagnostico_dir()  
-            elif pages[st.session_state.current_page] == "📋 Planilha Final":
-                render_planilha_final_dir()
+    st.set_page_config(page_title="Custom Sidebar and Buttons", layout="wide")
+    load_css("style.css")
+    add_bg_from_local("background.png")
+    # def main(navigate):
+    #     st.set_page_config(page_title="Oportunidade de Melhoria", layout="wide")
+    #     add_bg_from_local('background.png')
+    #     load_css('style.css')
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.session_state.current_page > 0:
-                if st.button("Anterior", key="prev_button"):
-                    st.session_state.current_page -= 1
-                    st.rerun()
-        with col3:
-            if st.session_state.current_page < len(pages) - 1:
-                if st.button("Próximo", key="next_button"):
-                    st.session_state.current_page += 1
-                    st.rerun()
-            elif st.session_state.current_page == len(pages) - 1:
-                if st.button("Finalizar", key="finish_button"):
-                    st.success("Processo finalizado com sucesso!")
+    #     # Define as páginas e sua navegação
+    #     pages = {
+    #         "🏠 Home": "main",
+    #         "🔍 Oportunidade de melhorias": "render_diagnostico_dir",
+    #         "📋 Planilha Final": "render_diagnostico_op"
+    #     }
+
+    #     # Barra lateral de navegação modular
+    #     st.sidebar.markdown("<h1 style='text-align: center; color: #AC8D61;'>Navegação</h1>", unsafe_allow_html=True)
+    #     for page_name, function_name in pages.items():
+    #         if st.sidebar.button(page_name, key=function_name, use_container_width=True):
+    #             navigate(function_name)
+
+    #     # Botões de navegação inferior
+    #     col1, col2, col3 = st.columns(3)
+    #     with col1:
+    #         if st.button("Anterior", key="prev_button"):
+    #             navigate("main")
+    #     with col3:
+    #         if st.button("Próximo", key="next_button"):
+    #             navigate("render_diagnostico_op")
+
+    # # Inicializa a aplicação apenas quando o script é executado diretamente
+    # if __name__ == "__main__":
+    #     main(navigate)
+
+
+
+    # Configuração de navegação interna
+    pages = {
+            "🏠 Home": "main",
+            "🔍 Oportunidade de melhorias": "diagnostico_dir",
+            "📋 Planilha Final": "diagnostico_op"}
+    # st.sidebar.title("Navegação")
+    st.sidebar.markdown("<h1 style='text-align: center; color: #AC8D61;'>Navegação</h1>", unsafe_allow_html=True)
+    for page_name, function_name in pages.items():
+        if st.sidebar.button(page_name, key=function_name, use_container_width=True):
+            navigate(function_name)
+            
     st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
@@ -387,5 +410,3 @@ def show(navigate):
         if st.button("Ir para Diagnóstico Oportunidade"):
             navigate("diagnostico_op")
 
-    # if __name__ == "__main__":
-    #     main()

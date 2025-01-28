@@ -3,33 +3,16 @@ import base64
 from pathlib import Path
 import os
 from dotenv import load_dotenv
-from process import run_agent_analysis 
+from process_op import run_agent_analysis_op
 import pandas as pd
 from io import BytesIO
 import time
 import streamlit as st
 
-load_dotenv()
-api_key = os.getenv("OPENAI_API_KEY")
+
 
 def show(navigate):
-
-    all_resultados=[]
-
-    if 'direcionadores' not in st.session_state:
-        st.session_state.direcionadores = []
-
-    def stylable_container(key, css_styles):
-        st.markdown(f"""
-            <style>
-            div[data-testid="stHorizontalBlock"] > div:nth-child({key}) {{
-                {css_styles}
-            }}
-            </style>
-        """, unsafe_allow_html=True)
-        return st.container()
-
-    # Colocando imagem de fundo
+    # Função para adicionar uma imagem de fundo
     def add_bg_from_local(image_file):
         with Path(image_file).open("rb") as file:
             encoded_string = base64.b64encode(file.read()).decode()
@@ -46,56 +29,36 @@ def show(navigate):
             """,
             unsafe_allow_html=True
         )
+    
+    # Adiciona a imagem de fundo
+    add_bg_from_local("background.png")  # Ajuste o caminho da imagem
+
+
 
     def load_css(css_file):
         with open(css_file, "r") as f:
             st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
     # Estilização de botões
-    def get_button_style(button_class):
-        if button_class == "current":
-            return "background-color: #01374C; color: white; font-weight: bold; font-size: 24px;"
-        elif button_class == "previous":
-            return "background-color: #4B4843; color: white; font-weight: normal; font-size: 24px;"
-        else:
-            return "background-color: #4B484340; color: #333333; font-size: 18px;"
-        
-    def setup_navigation():
-        st.sidebar.markdown("<h1 style='text-align: center; color: #AC8D61;'>Navegação</h1>", unsafe_allow_html=True)
-        
-        pages = ["🔍 Oportunidade de melhorias", "📋 Planilha Final"]
-        
-        if 'current_page' not in st.session_state:
-            st.session_state.current_page = 0
+    # def get_button_style(button_class):
+    #     if button_class == "current":
+    #         return "background-color: #01374C; color: white; font-weight: bold; font-size: 24px;"
+    #     elif button_class == "previous":
+    #         return "background-color: #4B4843; color: white; font-weight: normal; font-size: 24px;"
+    #     else:
+    #         return "background-color: #4B484340; color: #333333; font-size: 18px;"
 
-        for i, page in enumerate(pages):
-            button_class = "current" if i == st.session_state.current_page else "previous" if i == st.session_state.current_page - 1 else ""
-
-            if st.sidebar.button(page, key=f"nav_{i}", use_container_width=True, disabled=(i == st.session_state.current_page)):
-                st.session_state.current_page = i
-                st.rerun()
-
-            st.markdown(f"""
-                <style>
-                div.row-widget.stButton > button[key="nav_{i}"] {{
-                    {get_button_style(button_class)}
-                }}
-                </style>
-                """, unsafe_allow_html=True)
-
-        return pages
-
-    # Adicionando direcionador
-    def add_direcionador(new_direcionador):
-        if new_direcionador and new_direcionador not in st.session_state.direcionadores:
-            st.session_state.direcionadores.append(new_direcionador)
+    # Adicionando oportunidade
+    def add_oportunidade(new_oportunidade):
+        if new_oportunidade and new_oportunidade not in st.session_state.oportunidades:
+            st.session_state.oportunidades.append(new_oportunidade)
             return True
         return False
 
-    # Removendo direcionador
-    def remove_direcionador(direcionador_to_remove):
-        if direcionador_to_remove in st.session_state.direcionadores:
-            st.session_state.direcionadores.remove(direcionador_to_remove)
+    # Removendo oportunidade
+    def remove_oportunidade(oportunidade_to_remove):
+        if oportunidade_to_remove in st.session_state.oportunidades:
+            st.session_state.oportunidades.remove(oportunidade_to_remove)
 
     # Função para gerar excel
     def convert_df_to_excel(df):
@@ -108,8 +71,13 @@ def show(navigate):
                 writer.sheets['Oportunidade de melhorias'].column_dimensions[chr(65 + col_idx)].width = column_width + 2
         return output.getvalue()
 
+    # Configuração inicial de estados na sessão
+    if "oportunidades" not in st.session_state:
+        st.session_state.oportunidades = []
+    if "oportunidades" not in st.session_state:
+        st.session_state.resultados = pd.DataFrame(columns=["Direcionador", "Oportunidade de Melhoria"])
 
-    def render_diagnostico_dir():
+    def render_diagnostico_op():
         if 'form_inputs' not in st.session_state:
             st.session_state.form_inputs = {
                 'ramo_empresa': '',
@@ -124,29 +92,29 @@ def show(navigate):
             
         st.write("## Oportunidade de Melhoria")
 
-        with st.form(key='add_direcionador_form'):
-            new_direcionador = st.text_input(
-                "Novo Direcionador",
-                placeholder="Digite um novo direcionador",
-                key="new_direcionador"
+        with st.form(key='add_oportunidade_form'):
+            new_oportunidade = st.text_input(
+                "Nova Oportunidade",
+                placeholder="Digite uma oportunidade",
+                key="new_oportunidade"
             )
-            if st.form_submit_button("Adicionar Direcionador"):
-                if add_direcionador(new_direcionador):
-                    st.success(f"Direcionador '{new_direcionador}' adicionado com sucesso!")
+            if st.form_submit_button("Adicionar Oportunidade"):
+                if add_oportunidade(new_oportunidade):
+                    st.success(f"Oportunidade '{new_oportunidade}' adicionado com sucesso!")
                     st.rerun()
                 else:
-                    if not new_direcionador:
-                        st.warning("Por favor, digite um direcionador.")
+                    if not new_oportunidade:
+                        st.warning("Por favor, digite uma oportunidade.")
                     else:
-                        st.warning("Este direcionador já existe.")
+                        st.warning("Esta oportunidade já existe.")
 
-        for direcionador in st.session_state.direcionadores:
+        for oportunidade in st.session_state.oportunidades:
             col1, col2 = st.columns([3, 1])
             with col1:
-                st.text(direcionador)
+                st.text(oportunidade)
             with col2:
-                if st.button("Remover", key=f"remove_{direcionador}"):
-                    remove_direcionador(direcionador)
+                if st.button("Remover", key=f"remove_{oportunidade}"):
+                    remove_oportunidade(oportunidade)
                     st.rerun()
 
         with st.form(key='oportunidade_melhoria_form'):
@@ -187,66 +155,65 @@ def show(navigate):
                     'causa': causa
                 }
 
-                if ramo_empresa and st.session_state.direcionadores and nome_processo and atividade and evento and causa:
+                if ramo_empresa and st.session_state.oportunidades and nome_processo and atividade and evento and causa:
                     start_time = time.time()
                     
                     # Inicializar ou redefinir `all_resultados` como DataFrame, se não existir
                     if 'all_resultados' not in st.session_state or not isinstance(st.session_state.all_resultados, pd.DataFrame):
-                        st.session_state.all_resultados = pd.DataFrame(columns=['Direcionador'])  # Definir estrutura inicial
+                        st.session_state.all_resultados = pd.DataFrame(columns=['oportunidade'])  # Definir estrutura inicial
 
                     # Criar uma lista para armazenar novos resultados desta execução
                     new_resultados = []
 
-                    # Converter direcionadores para lista, caso seja uma string
-                    direcionadores = (
-                        [st.session_state.direcionadores] 
-                        if isinstance(st.session_state.direcionadores, str) 
-                        else st.session_state.direcionadores
+                    # Converter oportunidade para lista, caso seja uma string
+                    oportunidade = (
+                        [st.session_state.oportunidades] 
+                        if isinstance(st.session_state.oportunidades, str) 
+                        else st.session_state.oportunidades
                     )
 
-                    total_direcionadores = len(direcionadores)
+                    total_oportunidade = len(oportunidade)
 
-    # Spinner principal para tempo geral
-                    for i, direcao in enumerate(direcionadores, start=1):
+                    for i, direcao in enumerate(oportunidade, start=1):
 
-        # Verificar se o direcionador já foi processado
-                        if direcao not in st.session_state.all_resultados['Direcionador'].values:
+                        # Verificar se o oportunidade já foi processado
+                        if direcao not in st.session_state.all_resultados['oportunidade'].values:
                             # Criar o texto do processo
-                            processo = f"""ramo_empresa: {ramo_empresa}, direcionadores: {direcao}, nome_do_processo: {nome_processo}, atividade: {atividade}, evento: {evento}, causa: {causa}"""
+                            processo = f"""ramo_empresa: {ramo_empresa}, oportunidade: {direcao}, nome_do_processo: {nome_processo}, atividade: {atividade}, evento: {evento}, causa: {causa}"""
                             
                             # Definir a mensagem do spinner
-                            if len(direcionadores) == 1:
-                                mensagem_spinner = f"Seus dados estão sendo processados! Aguarde um instante (direcionador {i}/{len(direcionadores)})"
-                            elif i == len(direcionadores):
-                                mensagem_spinner = f"Estamos quase lá! (direcionador {i}/{len(direcionadores)})"
+                            if len(oportunidade) == 1:
+                                mensagem_spinner = f"Seus dados estão sendo processados! Aguarde um instante (oportunidade {i}/{len(oportunidade)})"
+                            elif i == len(oportunidade):
+                                mensagem_spinner = f"Estamos quase lá! (oportunidade {i}/{len(oportunidade)})"
                             else:
-                                mensagem_spinner = f"Seus dados estão sendo processados! Aguarde um instante (direcionador {i}/{len(direcionadores)})"
+                                mensagem_spinner = f"Seus dados estão sendo processados! Aguarde um instante (oportunidade {i}/{len(oportunidade)})"
                             
-                            # Spinner individual para o direcionador
+                            # Spinner individual para o oportunidade
                             with st.spinner(mensagem_spinner):
-                                analyst = run_agent_analysis(processo)
+                                analyst = run_agent_analysis_op(processo)
                             
                             if isinstance(analyst, pd.DataFrame):  # Certificar que o retorno é DataFrame
-                                analyst['Direcionador'] = direcao  # Adicionar a coluna 'Direcionador'
+                                analyst['oportunidade'] = direcao  # Adicionar a coluna 'oportunidade'
                                 new_resultados.append(analyst)
 
-                    # Atualizar resultados com os novos direcionadores processados
+                    # Atualizar resultados com os novos oportunidade processados
                     if new_resultados:
                         # Concatenar novos resultados ao DataFrame existente na sessão
                         new_resultados_df = pd.concat(new_resultados, ignore_index=True)
                         resultado_final = pd.concat([st.session_state.all_resultados, new_resultados_df], ignore_index=True)
                         
                         execution_time = time.time() - start_time
-                        st.success(f"Oportunidade de melhorias obtidas para {len(direcionadores)} direcionadores em {execution_time:.2f} segundos.")
+                        st.success(f"Oportunidade de melhorias obtidas para {len(oportunidade)} oportunidade em {execution_time:.2f} segundos.")
                         
                         # Preparar resultados para download
                         st.session_state.resultados = resultado_final
                         st.session_state.excel_file = convert_df_to_excel(resultado_final)
                         st.session_state.show_download_button = True
                     else:
-                        st.info("Nenhum novo direcionador foi processado. Todos já foram analisados anteriormente.")
+                        st.info("Nenhum novo oportunidade foi processado. Todos já foram analisados anteriormente.")
                 else:
-                    st.warning("Por favor, preencha todos os campos e adicione pelo menos um direcionador.")
+                    st.warning("Por favor, preencha todos os campos e adicione pelo menos um oportunidade.")
 
         if hasattr(st.session_state, 'show_download_button') and st.session_state.show_download_button:
             st.download_button(
@@ -256,7 +223,7 @@ def show(navigate):
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
-    def render_planilha_final_dir():
+    def render_planilha_final_op():
         if 'resultados' not in st.session_state:
             st.warning("Não foi executado a obtenção das Oportunidade de melhorias.")
             return
@@ -272,7 +239,7 @@ def show(navigate):
                 continue
             
             with st.form(key=f'opportunity_form_{idx}'):
-                st.write(f"### Oportunidade {idx + 1} - Direcionador: {row.get('Direcionador', 'N/A')}")
+                st.write(f"### Oportunidade {idx + 1} - oportunidade: {row.get('oportunidade', 'N/A')}")
                 
                 oportunidade_de_melhoria = st.text_area(
                     "Oportunidade de Melhoria", 
@@ -341,43 +308,14 @@ def show(navigate):
                 mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
             )
 
-    def main():
-        st.set_page_config(page_title="Oportunidade de Melhoria", layout="wide")
-        add_bg_from_local('background.png')
-        load_css('style.css')
-        
-        pages = setup_navigation()
-        progress_value = (st.session_state.current_page + 1) / len(pages)
-        
-        col1, col2 = st.columns([3, 1])
-        with col1:
-            st.markdown(f'<p class="big-font">{pages[st.session_state.current_page]}</p>', unsafe_allow_html=True)
-        with col2:
-            st.image('logo.png', width=200)
-        
-        st.progress(progress_value)
+    pages = {"🔍 Diagnóstico": render_diagnostico_op, "📋 Planilha Final": render_planilha_final_op}
+    st.sidebar.title("Navegação")
+    page = st.sidebar.radio("Ir para:", list(pages.keys()))
 
-        main_container = st.container()
-        with main_container:
-            if pages[st.session_state.current_page] == "🔍 Oportunidade de melhorias":
-                render_diagnostico_dir()  
-            elif pages[st.session_state.current_page] == "📋 Planilha Final":
-                render_planilha_final_dir()
+    # Renderiza a página selecionada
+    pages[page]()
 
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            if st.session_state.current_page > 0:
-                if st.button("Anterior", key="prev_button"):
-                    st.session_state.current_page -= 1
-                    st.rerun()
-        with col3:
-            if st.session_state.current_page < len(pages) - 1:
-                if st.button("Próximo", key="next_button"):
-                    st.session_state.current_page += 1
-                    st.rerun()
-            elif st.session_state.current_page == len(pages) - 1:
-                if st.button("Finalizar", key="finish_button"):
-                    st.success("Processo finalizado com sucesso!")
+    # Botões de navegação entre páginas principais
     st.markdown("---")
     col1, col2 = st.columns(2)
     with col1:
@@ -385,7 +323,45 @@ def show(navigate):
             navigate("main")
     with col2:
         if st.button("Ir para Diagnóstico Oportunidade"):
-            navigate("diagnostico_op")
+            navigate("diagnostico_dir")
+
+    # def main():
+    #     st.set_page_config(page_title="Oportunidade de Melhoria", layout="wide")
+    #     add_bg_from_local('background.png')
+    #     load_css('style.css')
+        
+    #     pages = setup_navigation()
+    #     progress_value = (st.session_state.current_page + 1) / len(pages)
+        
+    #     col1, col2 = st.columns([3, 1])
+    #     with col1:
+    #         st.markdown(f'<p class="big-font">{pages[st.session_state.current_page]}</p>', unsafe_allow_html=True)
+    #     with col2:
+    #         st.image('logo.png', width=200)
+        
+    #     st.progress(progress_value)
+
+    #     main_container = st.container()
+    #     with main_container:
+    #         if pages[st.session_state.current_page] == "🔍 Oportunidade de melhorias":
+    #             render_diagnostico_op()  
+    #         elif pages[st.session_state.current_page] == "📋 Planilha Final":
+    #             render_planilha_final_op()
+
+    #     col1, col2, col3 = st.columns(3)
+    #     with col1:
+    #         if st.session_state.current_page > 0:
+    #             if st.button("Anterior", key="prev_button"):
+    #                 st.session_state.current_page -= 1
+    #                 st.rerun()
+    #     with col3:
+    #         if st.session_state.current_page < len(pages) - 1:
+    #             if st.button("Próximo", key="next_button"):
+    #                 st.session_state.current_page += 1
+    #                 st.rerun()
+    #         elif st.session_state.current_page == len(pages) - 1:
+    #             if st.button("Finalizar", key="finish_button"):
+    #                 st.success("Processo finalizado com sucesso!")
 
     # if __name__ == "__main__":
     #     main()

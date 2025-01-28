@@ -120,7 +120,6 @@ s = f"""Empresa do ramo de construção, precisa melhorar seu processo de suprim
 foi orçado para a área. Verificado que a ordem de compra não é vinculado ao orçamento
 """
 resposta = modelo(question=s)
-print(resposta.answer)
 
 if resposta:
     weaviate_client.close()
